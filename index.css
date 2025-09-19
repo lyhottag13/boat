@@ -21,6 +21,22 @@ body {
     background-color: rgb(80, 80, 255);
 }
 
+#text-box {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: clamp(1rem, 2vw, 2rem);
+    padding-left: 30px;
+    padding-top: 10px;
+    position: absolute;
+    bottom: 10vh;
+    left: 50%;
+    transform: translateX(-50%);
+    filter: opacity(0.7);
+    border-radius: 50px;
+    height: 20vh;
+    width: 70vw;
+    background-color: white;
+}
+
 #boat {
     position: absolute;
     image-rendering: pixelated;
