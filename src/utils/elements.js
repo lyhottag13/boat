@@ -4,7 +4,10 @@ const elements = {
         boat: document.getElementById('boat')
     },
     div: {
-        textBox: document.getElementById('text-box')
+        /** @type {HTMLDivElement} */
+        textBox: document.getElementById('text-box'),
+        /** @type {HTMLDivElement} */
+        choices: document.getElementById('choices'),
     }
 }
 

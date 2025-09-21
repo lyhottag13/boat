@@ -37,14 +37,39 @@ body {
     background-color: white;
 }
 
+#choices {
+    text-align: center;
+    display: grid;
+    justify-content: center;
+    gap: 10vh;
+    position: absolute;
+    height: 70vh;
+    width: 100vw;
+    padding: 30px;
+}
+
+#choices button {
+    background-color:rgb(132, 132, 255);
+    color: white;
+    border-radius: 10px;
+    font-size: 30px;
+    width: 60vw;
+}
+
 #boat {
     position: absolute;
     image-rendering: pixelated;
-    top: 25vh;
+    top: 10vh;
     left: 50vw;
     transform: translateX(-50%);
     bottom: 50px;
     height: 500px;
-    transition: 1s cubic-bezier(0.455, 0.03, 0.515, 0.955) all;
-    
+    transition: top 1s cubic-bezier(0.455, 0.03, 0.515, 0.955), left 5s linear;
+}
+
+@media (max-width: 728px) {
+    #boat {
+        top: 30vh;
+        height: 200px;
+    }
 }
