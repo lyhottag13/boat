@@ -59,12 +59,10 @@ body {
 #boat {
     position: absolute;
     image-rendering: pixelated;
-    top: 10vh;
     left: 50vw;
     transform: translateX(-50%);
-    bottom: 50px;
     height: 500px;
-    transition: top 1s cubic-bezier(0.455, 0.03, 0.515, 0.955), left 5s linear;
+    transition: bottom 1s cubic-bezier(0.455, 0.03, 0.515, 0.955), left 5s linear;
 }
 
 @media (max-width: 728px) {

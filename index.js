@@ -1,5 +1,5 @@
 import elements from './src/utils/elements.js';
-import dialogue from './src/utils/dialogue.js';
+import dialogue from './src/utils/script.js';
 
 const isMobile = window.innerWidth < 728;
 
@@ -19,13 +19,15 @@ function loadBoatImage() {
 }
 
 function startBoatSway() {
+    const {boat} = elements.canvas;
+    const bottom = isMobile ?  '35vh' : '15vh';
+    const swish = isMobile ? '30vh' : '20vh';
+    boat.style.bottom = bottom;
     setInterval(() => {
-        const top = isMobile ?  '35vh' : '5vh';
-        const swish = isMobile ? '30vh' : '10vh';
-        if (boat.style.top === top) {
-            boat.style.top = swish;
+        if (boat.style.bottom === bottom) {
+            boat.style.bottom = swish;
         } else {
-            boat.style.top = top;
+            boat.style.bottom = bottom;
         }
     }, 1000);
 }
@@ -118,6 +120,7 @@ async function writeDialogue(dialogue) {
                 await sleep(Number(sleepTime));
             } else {
                 textBox.textContent += dialogue.at(i);
+                dialogue.at(i) === '.' && i != dialogue.length - 1 && await sleep(1000);
             }
             await sleep(20); // Sleeps between every character.
         }
