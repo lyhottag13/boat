@@ -1,5 +1,5 @@
 import elements from './src/utils/elements.js';
-import dialogue from './src/utils/script.js';
+import script from './src/utils/script.js';
 
 const isMobile = window.innerWidth < 728;
 
@@ -7,6 +7,30 @@ function main() {
     loadBoatImage();
     startBoatSway();
     startDialogue();
+    toggleDownTriangle();
+}
+
+let triangleInterval; // Stores the interval ID for the triangle.
+
+function toggleDownTriangle(enabled) {
+    const { downTriangle } = elements.img;
+    if (enabled) {
+        downTriangle.style.visibility = 'visible';
+        downTriangle.style.opacity = '1';
+        const cool = window.innerWidth;
+        downTriangle.style.transition = 'opacity 1.5s ease';
+        triangleInterval = setInterval(() => {
+            if (downTriangle.style.opacity === '1') {
+                downTriangle.style.opacity = '0';
+            } else {
+                downTriangle.style.opacity = '1';
+            }
+        }, 1000);
+    } else {
+        clearInterval(triangleInterval);
+        downTriangle.style.transition = 'none';
+        downTriangle.style.opacity = '0';
+    }
 }
 
 function loadBoatImage() {
@@ -19,8 +43,8 @@ function loadBoatImage() {
 }
 
 function startBoatSway() {
-    const {boat} = elements.canvas;
-    const bottom = isMobile ?  '35vh' : '15vh';
+    const { boat } = elements.canvas;
+    const bottom = isMobile ? '35vh' : '15vh';
     const swish = isMobile ? '30vh' : '20vh';
     boat.style.bottom = bottom;
     setInterval(() => {
@@ -38,17 +62,30 @@ function startDialogue() {
         document.addEventListener('click', () => {
             dialogueBox.progress();
         });
+        elements.button.save.addEventListener('click', () => {
+            save(dialogueBox);
+        });
+        elements.button.load.addEventListener('click', () => {
+            load(dialogueBox);
+        });
     }, 2000);
 }
 
 class DialogueBox {
     constructor(
+        /** @type {Number} */
         scene,
     ) {
+        this.counter;
+        this.scene;
         this.choice = -1;
         this.isWriting = false;
         this.swapScene(scene);
     }
+    /**
+     * Swaps the scene to the desired scene, resetting the dialogue counter in the process.
+     * @param {Number} sceneNumber The number of the scene to transition to, 0-indexed.
+     */
     swapScene(sceneNumber) {
         this.counter = -1;
         this.scene = sceneNumber;
@@ -57,10 +94,13 @@ class DialogueBox {
     async progress() {
         if (!this.isWriting) {
             this.counter++;
-            const currentDialogue = dialogue[this.scene][this.counter];
+            const currentDialogue = script[this.scene][this.counter];
             const body = currentDialogue.split(':')[1];
             if (currentDialogue.startsWith('CHOICE')) {
-                const choices = body.split(',');
+                toggleDownTriangle(false);
+                const text = body.split('#')[0];
+                const choices = body.split('#')[1].split(',');
+                await this.writeDialogue(text);
                 const choice = await this.showChoices(choices);
                 this.swapScene(choice);
             }
@@ -72,10 +112,61 @@ class DialogueBox {
                 this.swapScene(this.scene);
             }
             else {
-                this.isWriting = true;
-                await writeDialogue(currentDialogue);
-                this.isWriting = false;
+                await this.writeDialogue(currentDialogue);
             }
+        }
+    }
+    /**
+ * 
+ * @param {string} dialogue 
+ */
+    async writeDialogue(dialogue) {
+        const { text } = elements.span;
+        this.isWriting = true;
+        toggleDownTriangle(false);
+        text.textContent = '';
+        let skip = false;
+        return new Promise(async resolve => {
+
+            // Prevents a click on a choice from triggering the skip on the following line of text.
+            setTimeout(() => {
+                document.addEventListener('click', handleSkip);
+            }, 50);
+
+            // Iterates over every line in the script for special behaviors.
+            for (let i = 0; i < dialogue.length; i++) {
+                if (dialogue.at(i) === '[') {
+                    /*
+                    Sleeps depending on how long is indicated in the dialogue string,
+                    formatted as [NUMBER]This is the text. In that situation, it would
+                    sleep as long as NUMBER specifies, then displays "This is the text".
+                    */
+                    let sleepTime = '';
+                    i++; // Moves the pointer to the next character.
+                    while (dialogue.at(i) !== ']') {
+                        sleepTime += dialogue.at(i);
+                        i++;
+                    }
+                    await sleep(Number(sleepTime));
+                } else {
+                    text.textContent += dialogue.at(i);
+                    if (dialogue.at(i) === '.' && dialogue.at(i + 1) && !skip) {
+                        await sleep(1000);
+                    }
+                }
+                if (!skip) {
+                    await sleep(20); // Sleeps between every character.
+                }
+            }
+            resolve();
+            toggleDownTriangle(true);
+            document.removeEventListener('click', handleSkip);
+            this.isWriting = false;
+        });
+        function handleSkip() {
+            console.log('skip!');
+            document.removeEventListener('click', handleSkip);
+            skip = true;
         }
     }
     showChoices(choices) {
@@ -94,38 +185,21 @@ class DialogueBox {
             }
         });
     }
+    setSceneAndCounter(scene, counter) {
+        this.scene = scene;
+        this.counter = counter - 1;
+        this.progress();
+    }
 }
 
-/**
- * 
- * @param {string} dialogue 
- */
-async function writeDialogue(dialogue) {
-    const { textBox } = elements.div;
-    textBox.textContent = '';
-    return new Promise(async resolve => {
-        for (let i = 0; i < dialogue.length; i++) {
-            if (dialogue.at(i) === '[') {
-                /*
-                Sleeps depending on how long is indicated in the dialogue string,
-                formatted as [NUMBER]This is the text. In that situation, it would
-                sleep as long as NUMBER specifies, then displays "This is the text".
-                */
-                let sleepTime = '';
-                i++; // Moves the pointer to the next character.
-                while (dialogue.at(i) !== ']') {
-                    sleepTime += dialogue.at(i);
-                    i++;
-                }
-                await sleep(Number(sleepTime));
-            } else {
-                textBox.textContent += dialogue.at(i);
-                dialogue.at(i) === '.' && i != dialogue.length - 1 && await sleep(1000);
-            }
-            await sleep(20); // Sleeps between every character.
-        }
-        resolve();
-    });
+function save(dialogueBox) {
+    localStorage.clear();
+    localStorage.setItem('save', `${dialogueBox.scene},${dialogueBox.counter}`);
+}
+
+function load(dialoguebox) {
+    const save = localStorage.getItem('save').split(',');
+    dialoguebox.setSceneAndCounter(save[0], save[1]);
 }
 
 /**

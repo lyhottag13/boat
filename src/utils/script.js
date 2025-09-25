@@ -1,9 +1,8 @@
-const dialogue = [
+const script = [
     [
         'There is a boat floating on the water.',
         'Do you approach it?',
-        'I\'d be careful. He seems very happy.',
-        'CHOICE:Call|2,Swim|3,Walk|4,Think|1',
+        'CHOICE:I\'m going to give you choices now.#Call|2,Swim|3,Walk|4,Think|1',
     ],
     [
         '[5000]He\'s gone, now.',
@@ -32,4 +31,4 @@ const dialogue = [
     ]
 ];
 
-export default dialogue;
+export default script;
