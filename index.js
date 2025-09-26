@@ -59,8 +59,10 @@ function startBoatSway() {
 function startDialogue() {
     setTimeout(() => {
         const dialogueBox = new DialogueBox(0);
-        document.addEventListener('click', () => {
-            dialogueBox.progress();
+        document.addEventListener('click', e => {
+            if (e.target.tagName != 'BUTTON') {
+                dialogueBox.progress();
+            }
         });
         elements.button.save.addEventListener('click', () => {
             save(dialogueBox);
@@ -87,9 +89,11 @@ class DialogueBox {
      * @param {Number} sceneNumber The number of the scene to transition to, 0-indexed.
      */
     swapScene(sceneNumber) {
-        this.counter = -1;
-        this.scene = sceneNumber;
-        this.progress();
+        if (sceneNumber != null) {
+            this.counter = -1;
+            this.scene = sceneNumber;
+            this.progress();
+        }
     }
     async progress() {
         if (!this.isWriting) {
@@ -127,11 +131,14 @@ class DialogueBox {
         text.textContent = '';
         let skip = false;
         return new Promise(async resolve => {
-
+            const handleLoad = (resolve) => {
+                
+            }
             // Prevents a click on a choice from triggering the skip on the following line of text.
             setTimeout(() => {
                 document.addEventListener('click', handleSkip);
             }, 50);
+            elements.button.load.addEventListener('click', handleLoad);
 
             // Iterates over every line in the script for special behaviors.
             for (let i = 0; i < dialogue.length; i++) {
@@ -163,14 +170,18 @@ class DialogueBox {
             document.removeEventListener('click', handleSkip);
             this.isWriting = false;
         });
-        function handleSkip() {
-            console.log('skip!');
-            document.removeEventListener('click', handleSkip);
-            skip = true;
+        function handleSkip(e) {
+            if (e.target.tagName != 'BUTTON') {
+                document.removeEventListener('click', handleSkip);
+                skip = true;
+            }
         }
     }
     showChoices(choices) {
         return new Promise(resolve => {
+            const handleLoadClick = (choice, resolve) => {
+                this.clearChoices(choice, resolve, handleLoadClick);
+            }
             for (let i = 0; i < choices.length; i++) {
                 const choice = choices[i].split('|');
                 const choiceText = choice[0];
@@ -178,12 +189,22 @@ class DialogueBox {
                 const choiceButton = document.createElement('button');
                 choiceButton.textContent = choiceText;
                 choiceButton.addEventListener('click', () => {
-                    elements.div.choices.innerHTML = '';
-                    resolve(scenePointer);
+                    this.clearChoices(scenePointer, resolve)
                 });
                 elements.div.choices.append(choiceButton);
+                elements.button.load.addEventListener('click', handleLoadClick);
             }
         });
+    }
+
+    /**
+     * Clears the choices and resolves the promise to prevent memory leakage.
+     * @param {(value) => void} resolve The resolve function for the choices promise.
+     */
+    clearChoices(choice, resolve, handleLoadClick) {
+        elements.div.choices.innerHTML = '';
+        resolve(choice);
+        elements.button.load.removeEventListener('click', handleLoadClick);
     }
     setSceneAndCounter(scene, counter) {
         this.scene = scene;
